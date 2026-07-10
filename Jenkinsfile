@@ -1,5 +1,3 @@
-
-
 pipeline {
     agent any
 
@@ -53,4 +51,4 @@ pipeline {
             echo 'Pipeline failed! ❌'
         }
     }
-}
+} 
