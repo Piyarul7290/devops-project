@@ -6,10 +6,10 @@ pipeline {
         DOCKER_TAG = "${BUILD_NUMBER}"
     }
     
-    stages {
-        stage('Clone Code') {
-            steps {
-                git 'https://github.com/Piyarul7290/devops-project.git'
+       stage('Clone Code') {
+        steps {
+            git branch: 'main',
+                url: 'https://github.com/Piyarul7290/devops-project.git'
             }
         }
         
