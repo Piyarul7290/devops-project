@@ -28,8 +28,10 @@ pipeline {
                     usernameVariable: 'USERNAME',
                     passwordVariable: 'PASSWORD'
                 )]) {
-                    sh "docker login -u ${USERNAME} -p ${PASSWORD}"
-                    sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                     	sh '''
+            		echo $PASSWORD | docker login -u $USERNAME --password-stdin
+            		docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+            		'''
                 }
             }
         }
