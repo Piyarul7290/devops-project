@@ -20,21 +20,22 @@ pipeline {
             }
         }
         
-        stage('Push to Docker Hub') {
-            steps {
+             stage('Push to Docker Hub') {
+                 steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'docker-pipeline',
-                    usernameVariable: 'USERNAME',
-                    passwordVariable: 'PASSWORD'
+                credentialsId: 'docker-pipeline',
+                usernameVariable: 'USERNAME',
+                passwordVariable: 'PASSWORD'
                 )]) {
-                    sh '''
-                        echo $PASSWORD | docker login \
-                        -u $USERNAME \
-                        --password-stdin
-                        docker push piyarul7290/devops-project:${BUILD_NUMBER}
-                    '''
+                sh '''
+                    docker logout
+                    echo "$PASSWORD" | docker login \
+                    --username "$USERNAME" \
+                    --password-stdin
+                    docker push piyarul7290/devops-project:${BUILD_NUMBER}
+                '''
                 }
-            }
+            }  
         }
         
         stage('Deploy to Kubernetes') {
