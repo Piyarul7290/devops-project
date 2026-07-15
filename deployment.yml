@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: devops-project
-        image: piyarul7290/devops-project:latest
+        image: piyarul7290/devops-project:15
         ports:
         - containerPort: 3000
 ---
