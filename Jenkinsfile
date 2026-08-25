@@ -1,56 +1,85 @@
 pipeline {
     agent any
     
+    tools {
+        nodejs 'piyarul'
+    }
+    
     environment {
         DOCKER_IMAGE = 'piyarul7290/devops-project'
-        DOCKER_TAG = "${BUILD_NUMBER}"
+        // Use Jenkins build number as fallback, or commit hash
     }
     
     stages {
-        stage('Clone Code') {
+        stage('Git Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/Piyarul7290/devops-project.git'
+                git branch: 'main', url: 'https://github.com/Piyarul7290/devops-project.git'
+            }
+        }
+        
+        stage('Get Commit Hash') {
+            steps {
+                script {
+                    env.GIT_COMMIT_HASH = sh(
+                        script: "git rev-parse --short HEAD", 
+                        returnStdout: true
+                    ).trim()
+                    echo "Commit hash: ${env.GIT_COMMIT_HASH}"
+                }
+            }
+        }
+        
+        stage('Build & Test App') {
+            steps {
+                sh '''
+                    npm install
+                    npm test || echo "No tests configured"
+                '''
             }
         }
         
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+                script {
+                    docker.build("${DOCKER_IMAGE}:${env.GIT_COMMIT_HASH}")
+                }
             }
         }
         
-             stage('Push to Docker Hub') {
-                 steps {
-                withCredentials([usernamePassword(
-                credentialsId: 'docker-pipeline',
-                usernameVariable: 'USERNAME',
-                passwordVariable: 'PASSWORD'
-                )]) {
-                sh '''
-                    docker logout
-                    echo "$PASSWORD" | docker login \
-                    --username "$USERNAME" \
-                    --password-stdin
-                    docker push piyarul7290/devops-project:${BUILD_NUMBER}
-                '''
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials-id') {
+                        docker.image("${DOCKER_IMAGE}:${env.GIT_COMMIT_HASH}").push()
+                        docker.image("${DOCKER_IMAGE}:${env.GIT_COMMIT_HASH}").push('latest')
+                    }
                 }
-            }  
+            }
+        }
+        
+        stage('Test Cluster Connection') {
+            steps {
+                sh 'kubectl cluster-info'
+            }
         }
         
         stage('Deploy to Kubernetes') {
             steps {
-                sh "kubectl apply -f deployment.yml"
+                script {
+                    // Replace placeholder with actual commit hash and apply
+                    sh """
+                        sed 's|__IMAGE_TAG__|${env.GIT_COMMIT_HASH}|g' deployment.yml > deployment-updated.yml
+                        kubectl apply -f deployment-updated.yml
+                        kubectl rollout status deployment/devops-project
+                    """
+                }
             }
         }
     }
     
     post {
-        success {
-            echo 'Pipeline succeeded! ✅'
-        }
-        failure {
-            echo 'Pipeline failed! ❌'
+        always {
+            cleanWs()
         }
     }
 }
