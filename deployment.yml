@@ -14,7 +14,11 @@ spec:
     spec:
       containers:
       - name: devops-project
+<<<<<<< HEAD
         image: piyarul7290/devops-project:__IMAGE_TAG__
+=======
+        image: piyarul7290/devops-project:latest
+>>>>>>> 43c237c (Update)
         ports:
         - containerPort: 3000
         resources:
